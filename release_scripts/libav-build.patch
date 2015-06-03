@@ -1,0 +1,98 @@
+From cbcc035dd7da5f0932b2b326233c6ba7fad51c71 Mon Sep 17 00:00:00 2001
+From: Song Bing <b06498@freescale.com>
+Date: Thu, 19 Jun 2014 17:55:37 +0800
+Subject: [PATCH] libav build.
+
+Signed-off-by: Song Bing b06498@freescale.com
+---
+ build_android.sh |   60 ++++++++++++++++++++++++++++++++++++++++++++++++
+ configure        |    5 +++---
+ 2 files changed, 62 insertions(+), 3 deletions(-)
+ create mode 100755 build_android.sh
+
+diff --git a/build_android.sh b/build_android.sh
+new file mode 100755
+index 0000000..bd1f60a
+--- /dev/null
++++ b/build_android.sh
+@@ -0,0 +1,60 @@
++#!/bin/bash
++# user guidea
++# 1)please apply this patch on libav commit f851477889ae48e2f17073cf7486e1d5561b7ae4
++# 2)this patch enables libav decoders as hevc, h264, mpeg4, h263, mpeg2video, vp8, vp9,
++#   pcm_alaw, pcm_mulaw, adpcm_ms, adpcm_ima_wav.
++# 3)execute build_android.sh after apply the patch, the output librarys libavcodec.so
++#   and libavutil.so can be found in ./android/arm/lib/
++
++NDK=/opt/android-ndk-r9-standalone 
++SYSROOT=$NDK/sysroot/ 
++TOOLCHAIN=$NDK/bin/arm-linux-androideabi-
++
++function build_one 
++{ 
++./configure \
++--prefix=$PREFIX \
++--disable-static \
++--disable-everything \
++--disable-programs \
++--disable-doc \
++--disable-avdevice \
++--disable-avformat \
++--disable-swscale \
++--disable-avfilter \
++--disable-avresample \
++--disable-debug \
++--disable-symver \
++--enable-shared \
++--enable-decoder=hevc \
++--enable-decoder=h264 \
++--enable-decoder=mpeg4 \
++--enable-decoder=h263 \
++--enable-decoder=mpeg2video \
++--enable-decoder=vp8 \
++--enable-decoder=vp9 \
++--enable-decoder=pcm_alaw \
++--enable-decoder=pcm_mulaw \
++--enable-decoder=adpcm_ms \
++--enable-decoder=adpcm_ima_wav \
++--disable-yasm \
++--cross-prefix=$TOOLCHAIN \
++--target-os=linux \
++--arch=arm \
++--enable-cross-compile \
++--sysroot=$SYSROOT \
++--extra-cflags="-Os -fpic $ADDI_CFLAGS" \
++--extra-ldflags="$ADDI_LDFLAGS" \
++$ADDITIONAL_CONFIGURE_FLAG 
++
++make clean 
++make -j4
++make install 
++} 
++
++CPU=arm
++PREFIX=$(pwd)/android/$CPU  
++ADDI_CFLAGS="-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -marm -mvectorize-with-neon-quad" 
++
++build_one
++
+diff --git a/configure b/configure
+index ccf437f..245148e 100755
+--- a/configure
++++ b/configure
+@@ -2205,10 +2205,9 @@ SLIBPREF="lib"
+ SLIBSUF=".so"
+ SLIBNAME='$(SLIBPREF)$(FULLNAME)$(SLIBSUF)'
+ SLIBNAME_WITH_VERSION='$(SLIBNAME).$(LIBVERSION)'
+-SLIBNAME_WITH_MAJOR='$(SLIBNAME).$(LIBMAJOR)'
++SLIBNAME_WITH_MAJOR='$(SLIBPREF)$(FULLNAME)$(SLIBSUF)'
+ LIB_INSTALL_EXTRA_CMD='$$(RANLIB) "$(LIBDIR)/$(LIBNAME)"'
+-SLIB_INSTALL_NAME='$(SLIBNAME_WITH_VERSION)'
+-SLIB_INSTALL_LINKS='$(SLIBNAME_WITH_MAJOR) $(SLIBNAME)'
++SLIB_INSTALL_NAME='$(SLIBNAME_WITH_MAJOR)'
+ 
+ asflags_filter=echo
+ cflags_filter=echo
+-- 
+1.7.9.5
+
